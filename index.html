@@ -873,7 +873,7 @@
 <script>
 const SUPABASE_URL = 'https://yxbqejsbomhotpencrvt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4YnFlanNib21ob3RwZW5jcnZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTM0NDUsImV4cCI6MjA4OTA4OTQ0NX0.saZA4iAaq3dhqBZd3BM2SS0EU271oP4ENJ4Vt1eZLaw';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const questions = [
   {
@@ -1024,7 +1024,7 @@ async function submitLinkedin() {
 
   // Sauvegarder dans Supabase
   try {
-    await supabase.from('quiz_leads').insert({
+    await supabaseClient.from('quiz_leads').insert({
       linkedin_url: linkedinUrl,
       score_global: globalScore,
       score_positionnement: posScore,
