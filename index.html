@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Off Market — Diagnostic Offre Freelance</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -870,6 +871,10 @@
 </div>
 
 <script>
+const SUPABASE_URL = 'https://yxbqejsbomhotpencrvt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4YnFlanNib21ob3RwZW5jcnZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTM0NDUsImV4cCI6MjA4OTA4OTQ0NX0.saZA4iAaq3dhqBZd3BM2SS0EU271oP4ENJ4Vt1eZLaw';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const questions = [
   {
     axis: "POSITIONNEMENT",
@@ -986,7 +991,7 @@ function selectAnswer(btn, index) {
   }, 400);
 }
 
-function submitLinkedin() {
+async function submitLinkedin() {
   const input = document.getElementById('linkedin-url').value.trim();
   const error = document.getElementById('linkedin-error');
   if (!input || !input.toLowerCase().includes('linkedin.com/in/')) {
@@ -995,6 +1000,45 @@ function submitLinkedin() {
   }
   error.style.display = 'none';
   linkedinUrl = input;
+
+  // Calculer les scores avant la sauvegarde
+  const posScore = (2 - answers[0]) + (2 - answers[1]);
+  const offreScore = (2 - answers[2]) + (2 - answers[3]);
+  const acqQ6 = answers[5] >= 2 ? 0 : (2 - answers[5]);
+  const acqScore = (2 - answers[4]) + acqQ6;
+  const globalScore = Math.round(((posScore + offreScore + acqScore) / 12) * 100);
+
+  const getLevel = (score) => score >= 3 ? 'solid' : score >= 2 ? 'moyen' : 'faible';
+  const posLvl = getLevel(posScore);
+  const offreLvl = getLevel(offreScore);
+  const acqLvl = getLevel(acqScore);
+
+  const faibleCount = [posLvl, offreLvl, acqLvl].filter(l => l === 'faible').length;
+  const solidCount = [posLvl, offreLvl, acqLvl].filter(l => l === 'solid').length;
+  let profilName;
+  if (solidCount === 3) profilName = 'Pret a scaler';
+  else if (solidCount >= 2) profilName = 'En acceleration';
+  else if (faibleCount >= 2) profilName = 'Fondations a poser';
+  else if (faibleCount === 1) profilName = 'Point de blocage identifie';
+  else profilName = 'En construction';
+
+  // Sauvegarder dans Supabase
+  try {
+    await supabase.from('quiz_leads').insert({
+      linkedin_url: linkedinUrl,
+      score_global: globalScore,
+      score_positionnement: posScore,
+      score_offre: offreScore,
+      score_acquisition: acqScore,
+      niveau_positionnement: posLvl,
+      niveau_offre: offreLvl,
+      niveau_acquisition: acqLvl,
+      profil: profilName
+    });
+  } catch (e) {
+    console.error('Erreur sauvegarde Supabase:', e);
+  }
+
   showResults();
 }
 
